@@ -3,6 +3,7 @@ package com.expect.admin.web;
 import com.expect.admin.data.dataobject.WorkFlow;
 import com.expect.admin.data.pojo.Addwf;
 import com.expect.admin.data.pojo.Addwfp;
+import com.expect.admin.data.pojo.UpdwfpU;
 import com.expect.admin.service.WFPointService;
 import com.expect.admin.service.WorkFlowService;
 import org.slf4j.Logger;
@@ -26,13 +27,16 @@ public class WFPointController {
     @Autowired
     WFPointService wfPointService;
 
+
     /**
-     * 为各个流程点增加人员
-     * @param addwfps
+     * 为各个流程点更新人员,新增也在这儿
+     * @param upds
      */
-    @RequestMapping("/addUsers")
-    public void addUsers(List<Addwfp> addwfps){
-       wfPointService.addwfpUsers(addwfps);
+    @RequestMapping("/updateUsers")
+    public void updateUsers(List<UpdwfpU> upds){
+        wfPointService.updatewfp(upds);
     }
+
+
 
 }
