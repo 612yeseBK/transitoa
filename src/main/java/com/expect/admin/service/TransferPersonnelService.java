@@ -4,6 +4,7 @@ import com.expect.admin.data.dao.TransPerRecordRepository;
 import com.expect.admin.data.dao.TransferPersonnelRepository;
 import com.expect.admin.data.dataobject.TransPerRecord;
 import com.expect.admin.data.dataobject.TransferPersonnel;
+import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.service.vo.TransferPersonnelVo;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * description:人员借用业务处理
@@ -30,11 +32,18 @@ public class TransferPersonnelService {
     @Autowired
     WorkFlowService wfService;
 
+
+
+    public void getAllowsForUser(User user){
+
+    }
+
     /**
      * 根据id值获取人员借用表的对象
      * @param id
      * @return
      */
+    @Transactional
     public TransferPersonnel findById(String id){
         return tpRepository.findById(id);
     }

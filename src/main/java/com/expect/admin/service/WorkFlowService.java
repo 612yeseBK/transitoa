@@ -1,14 +1,23 @@
 package com.expect.admin.service;
 
 import com.expect.admin.data.dao.WorkFlowRepository;
+import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.data.dataobject.WorkFlow;
 import com.expect.admin.data.pojo.Addwf;
-import com.expect.admin.web.WFPointController;
+import com.expect.admin.data.pojo.WfDetail;
+import com.expect.admin.data.pojo.WfInfo;
+import com.expect.admin.data.pojo.WfpInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * description:更新需求后的流程，不包括合同，收发文，会议
@@ -26,7 +35,7 @@ public class WorkFlowService {
      * @return
      */
     public WFPoint getBeginPoint(String wkfid){
-        WorkFlow workFlow = workFlowRepository.findOne(wkfid);
+        WorkFlow workFlow = findOne(wkfid);
         WFPoint wfPoint = workFlow.getBeginPoint();
         return wfPoint;
     }
@@ -39,8 +48,83 @@ public class WorkFlowService {
         workFlow.setName(addwf.getName());
         workFlow.setType(addwf.getType());
         workFlow.setDescription(addwf.getDescription());
-        workFlow = workFlowRepository.save(workFlow);
+        workFlow = save(workFlow);
         return workFlow;
+    }
+
+    /**
+     * 对流程的名称和描述进行修改
+     * @param id
+     * @param name
+     * @param descpt
+     */
+    @Transactional
+    public void updWfNamAndDes(String id,String name,String descpt){
+        WorkFlow workFlow = workFlowRepository.findOne(id);
+        workFlow.setName(name);
+        workFlow.setDescription(descpt);
+        workFlowRepository.save(workFlow);
+    }
+
+    /**
+     * 获取所有的流程简略信息
+     * @return
+     */
+    public List<WfInfo> getAllWfInfo(){
+        List<WorkFlow> workFlows = findAll();
+        List<WfInfo> wfInfos = new ArrayList<>();
+        WfInfo wfInfo = new WfInfo();
+        for (WorkFlow wf : workFlows){
+            wfInfo.setId(wf.getId());
+            wfInfo.setName(wf.getName());
+            wfInfo.setDescription(wf.getDescription());
+            wfInfos.add(wfInfo);
+            wfInfo = new WfInfo();
+        }
+        return wfInfos;
+    }
+
+    public WfDetail getWfInfoById(String id){
+        WfDetail wfDetail = new WfDetail();
+        WorkFlow workFlow = findOne(id);
+        wfDetail.setName(workFlow.getName());
+        wfDetail.setDescription(workFlow.getDescription());
+        wfDetail.setId(workFlow.getId());
+        List<WfpInfo> wfpIs = new ArrayList<>();
+        WfpInfo wfpInfo = new WfpInfo();
+        List<Map> maps = new ArrayList<>();
+        Map map = new HashMap();
+        WFPoint wfPoint = workFlow.getBeginPoint();
+        if (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
+            wfpInfo.setId(wfPoint.getId());
+            wfpInfo.setName(wfPoint.getName());
+            for (User user : wfPoint.getUsers()){
+                map.put("id",user.getId());
+                map.put("name",user.getUsername());
+                maps.add(map);
+                map = new HashMap();
+            }
+            wfpInfo.setUsersInfos(maps);
+            wfpIs.add(wfpInfo);
+            wfpInfo = new WfpInfo();
+        }
+        wfDetail.setWfpInfos(wfpIs);
+        return wfDetail;
+    }
+
+    @Transactional
+    public WorkFlow findOne(String id){
+        return workFlowRepository.findOne(id);
+    }
+
+    @Transactional
+    public List<WorkFlow> findAll(){
+        return workFlowRepository.findAll();
+    }
+
+    @Transactional
+    public WorkFlow save(WorkFlow workFlow){
+        return workFlowRepository.save(workFlow);
     }
 
     /**
@@ -54,7 +138,22 @@ public class WorkFlowService {
      * 就不再加入原有的体系，可以额外新建一个新的表格，专门存放
      * @param id
      */
+    @Transactional
     public void delete(String id){
+        WorkFlow workFlow = workFlowRepository.findOne(id);
+        workFlow.setType(WorkFlow.DELETE);
+        workFlowRepository.save(workFlow);
+    }
+
+    /**
+     * 真正意义上删除
+     * 先删除该流程的过去申请的审批记录
+     * 再删除该流程过去的申请记录
+     * 再删除该流程的节点
+     * 再删除该流程，所以非常麻烦，事实上可以做一下cascade的级联，但是我就不做了，太麻烦了
+     * @param id
+     */
+    public void realDelete(String id){
 
     }
 }
