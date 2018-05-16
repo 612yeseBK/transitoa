@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class Addwf {
     private String name;//流程名称
-    private String type;//节点名称
+    private String type;//流程名称
     private String description;//节点描述
     private List<String> wfpnames;//该流程的流程节点们，list的顺序就是流程节点的顺序
 
