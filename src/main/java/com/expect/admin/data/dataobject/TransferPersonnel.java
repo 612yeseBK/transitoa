@@ -9,21 +9,31 @@ import java.util.Set;
 
 /**
  * description:人员借调表，用于公司申请人员借调使用
+ * 5/13：公司给的表格数据有：姓名，性别，出生年月，职号，岗位，工作单位，借用时间，派往单位，工种，借用事由，借用人数
+ * 5/13：其中姓名，性别，岗位，工作单位我们可以从User里面获取，其余需要用户填写，什么时候需要User的信息增加了，这里再进行调整
  * Created by gaoyw on 2018/5/5.
  */
 @Entity
 @Table(name = "c_transfer_personnel")
 public class TransferPersonnel {
+    //申请的三种状态
+    private static final String NOTCOM = "notcom";//未提交
+    private static final String WAITING= "waiting";//待处理
+    private static final String PASSED = "passed";//已通过
+    private static final String REJECTED = "rejected";//未通过
     private String id;
     private User applicant;//借调申请人
+    private String staffNum;//职工号
     private String applyTime;//申请发起时间
     private String beginTime;//开始的时间
     private String endTime;//结束的时间（开始到结束之间就是借调时间）
     private String reason;//借调事由
     private int number;//借调人数
-    private Department toDepartment;//派遣前往的单位
+    private String toDepartment;//派遣前往的单位
     private String job;//派遣的工种
     private WorkFlow workFlow;//该申请属于对应哪一个流程
+    private WFPoint wfPoint;//接下来要进入的流程节点，如果该节点为终止节点，则流程已经结束了，对于不通过的申请，我们需要
+    private String state;//流程的状态，共有三个，，待提交，待处理，通过，不通过
     private Set<TransPerRecord> transPerRecords = new HashSet<>();//审批流程日志
 
 
@@ -49,6 +59,15 @@ public class TransferPersonnel {
 
     public void setApplicant(User applicant) {
         this.applicant = applicant;
+    }
+
+    @Column(name = "staff_num")
+    public String getStaffNum() {
+        return staffNum;
+    }
+
+    public void setStaffNum(String staffNum) {
+        this.staffNum = staffNum;
     }
 
     @Column(name = "apply_time")
@@ -96,13 +115,12 @@ public class TransferPersonnel {
         this.number = number;
     }
 
-    @OneToOne
-    @JoinColumn(name = "department_id")//做一对一单向关联，在该表生成department_id外键
-    public Department getToDepartment() {
+    @Column(name = "department_id")
+    public String getToDepartment() {
         return toDepartment;
     }
 
-    public void setToDepartment(Department toDepartment) {
+    public void setToDepartment(String toDepartment) {
         this.toDepartment = toDepartment;
     }
 
