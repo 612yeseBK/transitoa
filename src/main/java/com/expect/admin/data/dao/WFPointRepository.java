@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Created by gaoyw on 2018/5/6.
  */
 public interface WFPointRepository extends JpaRepository<WFPoint, String> {
-
+    WFPoint findByName(String name);
 }

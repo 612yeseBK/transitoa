@@ -31,4 +31,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 	public int updateAvatarById(String id, String avatarId);
 
 	public User findByFullName(String fullName);
+
+	List<User> findByIdIn(List<String> ids);
 }
