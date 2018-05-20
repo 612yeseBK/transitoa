@@ -238,4 +238,18 @@ public class User implements UserDetails {
 	public void setAttachments(Set<Attachment> attachments) {
 		this.attachments = attachments;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) return true;
+		if(obj instanceof User) {
+			return ((User) obj).getId().equals(this.id);
+		} else return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
 }

@@ -17,10 +17,10 @@ import java.util.Set;
 @Table(name = "c_transfer_personnel")
 public class TransferPersonnel {
     //申请的三种状态
-    private static final String NOTCOM = "notcom";//未提交
-    private static final String WAITING= "waiting";//待处理
-    private static final String PASSED = "passed";//已通过
-    private static final String REJECTED = "rejected";//未通过
+    public static final String NOTCOM = "notcom";//未提交
+    public static final String WAITING= "waiting";//待处理
+    public static final String PASSED = "passed";//已通过
+    public static final String REJECTED = "rejected";//未通过
     private String id;
     private User applicant;//借调申请人
     private String staffNum;//职工号
@@ -32,7 +32,7 @@ public class TransferPersonnel {
     private String toDepartment;//派遣前往的单位
     private String job;//派遣的工种
     private WorkFlow workFlow;//该申请属于对应哪一个流程
-    private WFPoint wfPoint;//接下来要进入的流程节点，如果该节点为终止节点，则流程已经结束了，对于不通过的申请，我们需要
+    private WFPoint nxtPoint;//接下来要进入的流程节点，当前节点就是记录里面的节点，某个审批人审核之后，节点往后移动一个
     private String state;//流程的状态，共有三个，，待提交，待处理，通过，不通过
     private Set<TransPerRecord> transPerRecords = new HashSet<>();//审批流程日志
 
@@ -149,5 +149,24 @@ public class TransferPersonnel {
 
     public void setTransPerRecords(Set<TransPerRecord> transPerRecords) {
         this.transPerRecords = transPerRecords;
+    }
+
+    @OneToOne
+    @JoinColumn(name = "nxt_wfpid")
+    public WFPoint getNxtPoint() {
+        return nxtPoint;
+    }
+
+    public void setNxtPoint(WFPoint nxtPoint) {
+        this.nxtPoint = nxtPoint;
+    }
+
+    @Column(name = "state")
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 }
