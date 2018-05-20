@@ -3,6 +3,7 @@ package com.expect.admin.service;
 import com.expect.admin.data.dao.TransPerRecordRepository;
 import com.expect.admin.data.dao.UserRepository;
 import com.expect.admin.data.dataobject.TransPerRecord;
+import com.expect.admin.data.dataobject.TransferPersonnel;
 import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.service.convertor.UserConvertor;
@@ -36,17 +37,18 @@ public class TransPerRecordService {
      * @param wfPoint
      * @return
      */
-    public TransPerRecord addBeginOne(String message,String cljg, WFPoint wfPoint){
+    public TransPerRecord addOne(String message, String cljg, WFPoint wfPoint, TransferPersonnel tp,User user){
         TransPerRecord transPerRecord = new TransPerRecord();
-        User loginUsr = userRepository.findOne(userService.getLoginUser().getId());
-        transPerRecord.setUser(loginUsr);
+        transPerRecord.setUser(user);
         transPerRecord.setClsj(DateUtil.format(new Date(),DateUtil.fullFormat));
         transPerRecord.setCljg(cljg);
         transPerRecord.setWfPoint(wfPoint);
         transPerRecord.setMessage(message);
+        transPerRecord.setTransferPersonnel(tp);
         transPerRecord = tprRepository.save(transPerRecord);
-        System.out.println(transPerRecord.getId());
         return transPerRecord;
     }
+
+
 
 }

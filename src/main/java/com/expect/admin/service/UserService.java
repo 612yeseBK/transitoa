@@ -97,6 +97,17 @@ public class UserService implements UserDetailsService {
 		return UserConvertor.convert(user);
 	}
 
+	public User getLogUsr() {
+		User user;
+		if(SecurityContextHolder.getContext().getAuthentication()!=null){
+			user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		}else{
+			user = (User) ( (SecurityContext)session.getAttribute("SPRING_SECURITY_CONTEXT") ).getAuthentication().getPrincipal();
+		}
+		if(user == null) return null;
+		return user;
+	}
+
 	/**
 	 * 获取当前用户签名附件
 	 * @return

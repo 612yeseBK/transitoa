@@ -17,12 +17,13 @@ import java.util.Set;
 public class TransferPersonnelVo {
     private String id;
     private User applicant;//借调申请人
-    private Date applyTime;//申请发起时间
-    private Date beginTime;//开始的时间
-    private Date endTime;//结束的时间（开始到结束之间就是借调时间）
+    private String staffNum;//职工号
+    private String applyTime;//申请发起时间
+    private String beginTime;//开始的时间
+    private String endTime;//结束的时间（开始到结束之间就是借调时间）
     private String reason;//借调事由
     private int number;//借调人数
-    private DepartmentVo toDepartmentVo;//派遣前往的单位
+    private String toDepartment;//派遣前往的单位
     private String job;//派遣的工种
 
     public TransferPersonnelVo(){}
@@ -65,28 +66,36 @@ public class TransferPersonnelVo {
         this.applicant = applicant;
     }
 
-    public Date getApplyTime() {
+    public String getApplyTime() {
         return applyTime;
     }
 
-    public void setApplyTime(Date applyTime) {
+    public void setApplyTime(String applyTime) {
         this.applyTime = applyTime;
     }
 
-    public Date getBeginTime() {
+    public String getBeginTime() {
         return beginTime;
     }
 
-    public void setBeginTime(Date beginTime) {
+    public void setBeginTime(String beginTime) {
         this.beginTime = beginTime;
     }
 
-    public Date getEndTime() {
+    public String getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(Date endTime) {
+    public void setEndTime(String endTime) {
         this.endTime = endTime;
+    }
+
+    public String getToDepartment() {
+        return toDepartment;
+    }
+
+    public void setToDepartment(String toDepartment) {
+        this.toDepartment = toDepartment;
     }
 
     public String getReason() {
@@ -105,12 +114,12 @@ public class TransferPersonnelVo {
         this.number = number;
     }
 
-    public DepartmentVo getToDepartmentVo() {
-        return toDepartmentVo;
+    public String getStaffNum() {
+        return staffNum;
     }
 
-    public void setToDepartment(DepartmentVo toDepartmentVo) {
-        this.toDepartmentVo = toDepartmentVo;
+    public void setStaffNum(String staffNum) {
+        this.staffNum = staffNum;
     }
 
     public String getJob() {

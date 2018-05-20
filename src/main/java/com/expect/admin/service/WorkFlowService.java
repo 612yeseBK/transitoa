@@ -8,6 +8,7 @@ import com.expect.admin.data.pojo.Addwf;
 import com.expect.admin.data.pojo.WfDetail;
 import com.expect.admin.data.pojo.WfInfo;
 import com.expect.admin.data.pojo.WfpInfo;
+import com.expect.admin.service.vo.WorkFlowVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,37 @@ public class WorkFlowService {
     private final Logger log = LoggerFactory.getLogger(WorkFlowService.class);
     @Autowired
     WorkFlowRepository workFlowRepository;
+
+    /**
+     * 根据流程类别和申请者姓名找到该申请者所有允许的申请，并返回
+     * @param type
+     * @param user
+     * @return
+     */
+    public List<WorkFlow> findAplt(String type,User user){
+        List<WorkFlow> aplt = new ArrayList<>();
+        List<WorkFlow> wfs = workFlowRepository.findAllByType(type);
+        for (WorkFlow wf : wfs){
+            if (wf.getBeginPoint().getUsers().contains(user)){
+                aplt.add(wf);
+            }
+        }
+        return aplt;
+    }
+
+    /**
+     * 根据可以申请的流程获取返回前端的数据
+     * @param wkfls
+     * @return
+     */
+    public List<WorkFlowVo> getVoFromWfs(List<WorkFlow> wkfls){
+        List<WorkFlowVo> wfvos = new ArrayList<>();
+        for (WorkFlow wf : wkfls){
+            wfvos.add(new WorkFlowVo(wf));
+        }
+        return wfvos;
+    }
+
 
     /**
      * 根据流程id获取该流程的第一个节点
@@ -84,6 +116,11 @@ public class WorkFlowService {
         return wfInfos;
     }
 
+    /**
+     * 根据id获取该流程的详细信息（包括节点）
+     * @param id
+     * @return
+     */
     public WfDetail getWfInfoById(String id){
         WfDetail wfDetail = new WfDetail();
         WorkFlow workFlow = findOne(id);
