@@ -118,7 +118,7 @@ public class TransferPersonnelService {
         List<TransferPersonnel> tfpsNeed = new ArrayList<>();
         Set<User> users;
         for (TransferPersonnel tfp : tfps){
-            users = tfp.getNxtPoint().getUsers();
+            users = tfp.getNxtPoint().getRole().getUsers();
             for (User u : users){
                 if (u.equals(user)){
                     tfpsNeed.add(tfp);
