@@ -21,7 +21,7 @@ public class WFPoint {
     private WorkFlow workFlow;//该节点对应的流程
     private WFPoint prePoint;//该节点的前一个节点,需要为开始节点在数据库里加入一个终结点
     private WFPoint nxtPoint;//该节点的后一个节点，需要为结束节点在数据库里加入一个终结点，这两个节点可以变成一个
-    private Set<User> users = new HashSet<>();//该节点的审批人员
+    private Role role; //该节点的角色
 
     @Id
     @GeneratedValue(generator = "uuid")
@@ -73,14 +73,13 @@ public class WFPoint {
         this.nxtPoint = nxtPoint;
     }
 
-    @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
-    @JoinTable(name = "wfpoint_user", joinColumns = @JoinColumn(name = "wfp_id"),
-            inverseJoinColumns = @JoinColumn(name = "usr_id"))
-    public Set<User> getUsers() {
-        return users;
+    @OneToOne
+    @JoinColumn(name = "role_id")
+    public Role getRole() {
+        return role;
     }
 
-    public void setUsers(Set<User> users) {
-        this.users = users;
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

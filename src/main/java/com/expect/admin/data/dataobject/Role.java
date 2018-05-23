@@ -1,5 +1,6 @@
 package com.expect.admin.data.dataobject;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -26,8 +27,8 @@ public class Role {
 	private String id;
 	private String name;
 	private String remark;
-	private Set<User> users;
-	private Set<Function> functions;
+	private Set<User> users = new HashSet<>();
+	private Set<Function> functions = new HashSet<>();
 	private Department ssgs;//角色所属公司
 	private Department ssbm;//角色所属部门
 
