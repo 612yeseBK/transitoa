@@ -1,8 +1,7 @@
 package com.expect.admin.service;
 
-import com.expect.admin.data.dao.UserRepository;
-import com.expect.admin.data.dao.WFPointRepository;
-import com.expect.admin.data.dao.WorkFlowRepository;
+import com.expect.admin.data.dao.*;
+import com.expect.admin.data.dataobject.Role;
 import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.data.dataobject.WorkFlow;
@@ -34,6 +33,10 @@ public class WFPointService {
     private UserRepository userRepository;
     @Autowired
     WorkFlowRepository workFlowRepository;
+    @Autowired
+    RoleRepository roleRepository;
+    @Autowired
+    FunctionRepository functionRepository;
 
     /**
      *  为流程增加它的节点，暂时不增加人员
@@ -48,11 +51,18 @@ public class WFPointService {
         beforePoint = wfPointRepository.save(beforePoint);
         WFPoint temp = beforePoint;
         WFPoint wfPoint = new WFPoint();
+        Role role = new Role();
         List<String> wfpnames = addwf.getWfpnames();
+        List<String> funcIds = addwf.getFuncIds();
         for (int i = 0;i<wfpnames.size();i++){
             wfPoint.setWorkFlow(workFlow);
             wfPoint.setName(wfpnames.get(i));
             wfPoint.setPrePoint(beforePoint);
+            //为每个节点新增一个角色，并将该角色与某个功能绑定，这个功能需要实现添加好
+            role.setName(workFlow.getName()+"_"+i); // 此处自动新增角色，角色名流程名_{节点顺序}
+            role.getFunctions().add(functionRepository.findOne(funcIds.get(i)));
+            role = roleRepository.save(role);
+            wfPoint.setRole(role);
             beforePoint = wfPointRepository.save(wfPoint);
             if (i == 0){
                 //设置初始节点
@@ -64,6 +74,7 @@ public class WFPointService {
                 wfPointRepository.save(temp);
             }
             wfPoint = new WFPoint();
+            role = new Role();
         }
     }
 
@@ -76,7 +87,7 @@ public class WFPointService {
         WFPoint wfPoint;
         for (int i = 0;i<addwfps.size();i++){
             wfPoint = wfPointRepository.findOne(addwfps.get(i).getId());
-            wfPoint.setUsers(getUsersFromIds(addwfps.get(i).getIds()));
+            wfPoint.getRole().setUsers((getUsersFromIds(addwfps.get(i).getIds())));
             wfPointRepository.save(wfPoint);
         }
     }
@@ -113,8 +124,9 @@ public class WFPointService {
      * @param wfp
      */
     public void delUsr(List<User> users,WFPoint wfp){
-        wfp.getUsers().removeAll(users);
-        save(wfp);
+        Role role = wfp.getRole();
+        role.getUsers().removeAll(users);
+        roleRepository.save(role);
     }
 
     /**
@@ -123,8 +135,9 @@ public class WFPointService {
      * @param wfp
      */
     public void addUsr(List<User> users,WFPoint wfp){
-        wfp.getUsers().addAll(users);
-        save(wfp);
+        Role role = wfp.getRole();
+        role.getUsers().addAll(users);
+        roleRepository.save(role);
     }
 
     @Transactional
