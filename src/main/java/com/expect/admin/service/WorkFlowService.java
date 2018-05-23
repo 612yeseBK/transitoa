@@ -40,7 +40,7 @@ public class WorkFlowService {
         List<WorkFlow> aplt = new ArrayList<>();
         List<WorkFlow> wfs = workFlowRepository.findAllByType(type);
         for (WorkFlow wf : wfs){
-            if (wf.getBeginPoint().getUsers().contains(user)){
+            if (wf.getBeginPoint().getRole().getUsers().contains(user)){
                 aplt.add(wf);
             }
         }
@@ -135,7 +135,7 @@ public class WorkFlowService {
         if (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
             wfpInfo.setId(wfPoint.getId());
             wfpInfo.setName(wfPoint.getName());
-            for (User user : wfPoint.getUsers()){
+            for (User user : wfPoint.getRole().getUsers()){
                 map.put("id",user.getId());
                 map.put("name",user.getUsername());
                 maps.add(map);
