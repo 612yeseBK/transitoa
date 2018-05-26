@@ -23,7 +23,7 @@ import java.util.List;
  * Created by gaoyw on 2018/5/14.
  */
 @Controller
-@RequestMapping("/transper")
+@RequestMapping("/admin/transper")
 public class TransferPersonnelController {
 
     @Autowired
