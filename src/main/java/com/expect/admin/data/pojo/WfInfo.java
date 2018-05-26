@@ -7,6 +7,7 @@ package com.expect.admin.data.pojo;
 public class WfInfo {
     String id;
     String name;
+    String typeName;
     String description;
 
     public String getId() {
@@ -31,5 +32,13 @@ public class WfInfo {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
 }

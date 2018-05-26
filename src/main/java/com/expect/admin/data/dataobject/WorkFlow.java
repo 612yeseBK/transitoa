@@ -3,6 +3,8 @@ package com.expect.admin.data.dataobject;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * description:流程表，这里是后面需求更改后的流程设计，流程被认为是可以由用户修改的
@@ -13,12 +15,18 @@ import javax.persistence.*;
 @Table(name = "work_flow")
 public class WorkFlow {
     public static final String TRANS_PERSON = "transPerson";//人员借调类标记
-    public static final String DELETE = "delete_transPerson";//人员借调类删除后标记
+    public static final String DELETE_TRANS_PERSON = "delete_transPerson";//人员借调类删除后标记
+    public static final Map<String,String> map = new HashMap();
     private String id;
     private String type;//流程的类别，是属于借调，还是出差
     private String name;//流程的名称
     private WFPoint beginPoint;//流程的开始节点
     private String description;//流程描述
+
+    static {
+        map.put("transPerson","人员借调");
+        map.put("delete_transPerson","人员借调(已停用)");
+    }
 
     @Id
     @GeneratedValue(generator = "uuid")

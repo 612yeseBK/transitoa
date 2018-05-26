@@ -11,7 +11,8 @@ import java.util.Map;
 public class WfpInfo {
     String id;
     String name;
-    List<Map> usersInfos;//Map里面有两个字段，分别为id，name，用以存储该节点的用户信息
+    String funcId;
+    List<IdName> usersInfos;
 
     public String getId() {
         return id;
@@ -29,12 +30,20 @@ public class WfpInfo {
         this.name = name;
     }
 
-    public List getUsersInfos() {
+    public List<IdName> getUsersInfos() {
         return usersInfos;
     }
 
-    public void setUsersInfos(List usersInfos) {
+    public void setUsersInfos(List<IdName> usersInfos) {
         this.usersInfos = usersInfos;
+    }
+
+    public String getFuncId() {
+        return funcId;
+    }
+
+    public void setFuncId(String funcId) {
+        this.funcId = funcId;
     }
 }
 

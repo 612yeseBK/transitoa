@@ -25,8 +25,6 @@ public class TransPerRecord {
 
     private TransferPersonnel transferPersonnel;//处理内容的id（所处理的东西的id）
 
-    private WFPoint wfPoint;//对应的流程节点，一个流程节点会有很多记录
-
 
     public TransPerRecord(){}
 
@@ -89,13 +87,13 @@ public class TransPerRecord {
         this.transferPersonnel = transferPersonnel;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "wfp_id")
-    public WFPoint getWfPoint() {
-        return wfPoint;
-    }
-
-    public void setWfPoint(WFPoint wfPoint) {
-        this.wfPoint = wfPoint;
-    }
+//    @ManyToOne
+//    @JoinColumn(name = "wfp_id")
+//    public WFPoint getWfPoint() {
+//        return wfPoint;
+//    }
+//
+//    public void setWfPoint(WFPoint wfPoint) {
+//        this.wfPoint = wfPoint;
+//    }
 }

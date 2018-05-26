@@ -10,6 +10,7 @@ public class WfDetail {
     String id;
     String name;
     String description;
+    String type;
     List<WfpInfo> wfpInfos;
 
     public String getId() {
@@ -44,4 +45,11 @@ public class WfDetail {
         this.wfpInfos = wfpInfos;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

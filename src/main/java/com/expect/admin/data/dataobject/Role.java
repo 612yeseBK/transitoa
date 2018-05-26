@@ -101,5 +101,18 @@ public class Role {
 		this.ssbm = ssbm;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) return true;
+		if(obj instanceof Role) {
+			return ((Role) obj).getId().equals(this.id);
+		} else return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
 }
 
