@@ -1,13 +1,14 @@
 package com.expect.admin.service;
 
+import com.expect.admin.data.dao.FunctionRepository;
 import com.expect.admin.data.dao.WorkFlowRepository;
+import com.expect.admin.data.dataobject.Function;
 import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.data.dataobject.WorkFlow;
-import com.expect.admin.data.pojo.Addwf;
-import com.expect.admin.data.pojo.WfDetail;
-import com.expect.admin.data.pojo.WfInfo;
-import com.expect.admin.data.pojo.WfpInfo;
+import com.expect.admin.data.pojo.*;
+import com.expect.admin.service.convertor.FunctionConvertor;
+import com.expect.admin.service.vo.FunctionVo;
 import com.expect.admin.service.vo.WorkFlowVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,8 @@ public class WorkFlowService {
     private final Logger log = LoggerFactory.getLogger(WorkFlowService.class);
     @Autowired
     WorkFlowRepository workFlowRepository;
+    @Autowired
+    FunctionRepository functionRepository;
 
     /**
      * 根据流程类别和申请者姓名找到该申请者所有允许的申请，并返回
@@ -45,6 +48,22 @@ public class WorkFlowService {
             }
         }
         return aplt;
+    }
+
+    /**
+     * 获取所有的菜单
+     */
+    public List<IdName> getFunctions() {
+        List<Function> functions = functionRepository.findAll();
+        List<IdName> idNames = new ArrayList<>();
+        IdName idName = new IdName();
+        for (Function fuc : functions){
+            idName.setId(fuc.getId());
+            idName.setName(fuc.getName());
+            idNames.add(idName);
+            idName = new IdName();
+        }
+        return idNames;
     }
 
     /**
@@ -84,6 +103,16 @@ public class WorkFlowService {
         return workFlow;
     }
 
+    public WorkFlow addWF(WfDetail wfDetail){
+        WorkFlow workFlow = new WorkFlow();
+        workFlow.setName(wfDetail.getName());
+        workFlow.setType(wfDetail.getType());
+        workFlow.setDescription(wfDetail.getDescription());
+        workFlow = save(workFlow);
+        return workFlow;
+    }
+
+
     /**
      * 对流程的名称和描述进行修改
      * @param id
@@ -109,6 +138,7 @@ public class WorkFlowService {
         for (WorkFlow wf : workFlows){
             wfInfo.setId(wf.getId());
             wfInfo.setName(wf.getName());
+            wfInfo.setTypeName(WorkFlow.map.get(wf.getType()));
             wfInfo.setDescription(wf.getDescription());
             wfInfos.add(wfInfo);
             wfInfo = new WfInfo();
@@ -127,27 +157,31 @@ public class WorkFlowService {
         wfDetail.setName(workFlow.getName());
         wfDetail.setDescription(workFlow.getDescription());
         wfDetail.setId(workFlow.getId());
+        wfDetail.setType(workFlow.getType());
         List<WfpInfo> wfpIs = new ArrayList<>();
-        WfpInfo wfpInfo = new WfpInfo();
-        List<Map> maps = new ArrayList<>();
-        Map map = new HashMap();
         WFPoint wfPoint = workFlow.getBeginPoint();
-        if (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
+        while (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
+            List<IdName> idNames = new ArrayList<>();
+            WfpInfo wfpInfo = new WfpInfo();
             wfpInfo.setId(wfPoint.getId());
             wfpInfo.setName(wfPoint.getName());
+            //这个角色是为了这个节点新建的，里面我们只能添加一个funcition，所以只需要取一个就可以了
+            wfpInfo.setFuncId(wfPoint.getRole().getFunctions().iterator().next().getId());
             for (User user : wfPoint.getRole().getUsers()){
-                map.put("id",user.getId());
-                map.put("name",user.getUsername());
-                maps.add(map);
-                map = new HashMap();
+                IdName idName = new IdName();
+                idName.setId(user.getId());
+                idName.setName(user.getFullName()+"("+user.getUsername()+")");
+                idNames.add(idName);
             }
-            wfpInfo.setUsersInfos(maps);
+            wfpInfo.setUsersInfos(idNames);
             wfpIs.add(wfpInfo);
-            wfpInfo = new WfpInfo();
+            wfPoint = wfPoint.getNxtPoint();
         }
         wfDetail.setWfpInfos(wfpIs);
         return wfDetail;
     }
+
+
 
     @Transactional
     public WorkFlow findOne(String id){
@@ -176,9 +210,21 @@ public class WorkFlowService {
      * @param id
      */
     @Transactional
-    public void delete(String id){
+    public void sorftDelete(String id){
         WorkFlow workFlow = workFlowRepository.findOne(id);
-        workFlow.setType(WorkFlow.DELETE);
+        String beforeType = workFlow.getType();
+        workFlow.setType("delete_"+beforeType);
+        workFlowRepository.save(workFlow);
+    }
+
+    @Transactional
+    public void reuse(String id){
+        WorkFlow workFlow = workFlowRepository.findOne(id);
+        String beforeType = workFlow.getType();
+        int i = beforeType.indexOf("_");
+        String recover = beforeType.substring(i+1,beforeType.length());
+        System.out.println("============="+recover);
+        workFlow.setType(recover);
         workFlowRepository.save(workFlow);
     }
 

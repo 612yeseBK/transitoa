@@ -137,8 +137,9 @@ public class TransferPersonnelService {
         List<TransPerRecord> tprs = tprRepository.findByUserId(usrid);
         List<TransferPersonnel> tps = new ArrayList<>();
         for (TransPerRecord tpr : tprs){
-            //如果这个节点是第一个节点，那么这个记录及时提交记录，而不是审批记录
-            if (!tpr.getWfPoint().getPrePoint().getName().equals(WFPoint.ENDPOINT)) {
+            Set<TransPerRecord> transPerRecords = tpr.getTransferPersonnel().getTransPerRecords();
+            //根据记录的信息判断这个记录是提交保存记录，还是审批记录
+            if (!(tpr.getMessage().equals("提交")||tpr.getMessage().equals("保存"))) {
                 tps.add(tpr.getTransferPersonnel());
             }
         }

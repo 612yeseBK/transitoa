@@ -5,18 +5,14 @@ import com.expect.admin.data.dataobject.Role;
 import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.data.dataobject.WorkFlow;
-import com.expect.admin.data.pojo.Addwf;
-import com.expect.admin.data.pojo.Addwfp;
-import com.expect.admin.data.pojo.UpdwfpU;
+import com.expect.admin.data.pojo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * description:
@@ -39,29 +35,41 @@ public class WFPointService {
     FunctionRepository functionRepository;
 
     /**
-     *  为流程增加它的节点，暂时不增加人员
+     *  为流程增加它的节点以及人员
      * “end_节点_end”这个节点的前置指向流程的尾部，后置指向流程的首部
-     * @param addwf
+     * @param wfDetail
      * @param workFlow
      */
     @Transactional
-    public void addPoints(Addwf addwf,WorkFlow workFlow){
+    public void addPoints(WfDetail wfDetail, WorkFlow workFlow){
         WFPoint beforePoint = new WFPoint();
         beforePoint.setName(WFPoint.ENDPOINT);
         beforePoint = wfPointRepository.save(beforePoint);
         WFPoint temp = beforePoint;
         WFPoint wfPoint = new WFPoint();
         Role role = new Role();
-        List<String> wfpnames = addwf.getWfpnames();
-        List<String> funcIds = addwf.getFuncIds();
-        for (int i = 0;i<wfpnames.size();i++){
+        List<WfpInfo> wfpInfos = wfDetail.getWfpInfos();
+        WfpInfo wfpInfo;
+        String userId ;
+        for (int i = 0;i<wfpInfos.size();i++){
+            wfpInfo = wfpInfos.get(i);
             wfPoint.setWorkFlow(workFlow);
-            wfPoint.setName(wfpnames.get(i));
+            wfPoint.setName(wfpInfo.getName());
             wfPoint.setPrePoint(beforePoint);
             //为每个节点新增一个角色，并将该角色与某个功能绑定，这个功能需要实现添加好
-            role.setName(workFlow.getName()+"_"+i); // 此处自动新增角色，角色名流程名_{节点顺序}
-            role.getFunctions().add(functionRepository.findOne(funcIds.get(i)));
+            role.setName(workFlow.getName()+"_"+i);// 此处自动新增角色，角色名是流程名_{节点顺序}
+            role.getFunctions().clear();
+            // 这里的角色里面是专门为节点新建的，只能有一个功能
+            role.getFunctions().add(functionRepository.findOne(wfpInfo.getFuncId()));
             role = roleRepository.save(role);
+            List<IdName> list = wfpInfo.getUsersInfos();
+            //增加人员
+            for (IdName idName : list){
+                userId = idName.getId();
+                User user = userRepository.findOne(userId);
+                user.getRoles().add(role);
+                userRepository.save(user);
+            }
             wfPoint.setRole(role);
             beforePoint = wfPointRepository.save(wfPoint);
             if (i == 0){
@@ -69,7 +77,7 @@ public class WFPointService {
                 workFlow.setBeginPoint(beforePoint);
                 workFlowRepository.save(workFlow);
             }
-            if (i == wfpnames.size()-1){
+            if (i == wfpInfos.size()-1){
                 temp.setPrePoint(wfPoint);
                 wfPointRepository.save(temp);
             }
@@ -77,6 +85,38 @@ public class WFPointService {
             role = new Role();
         }
     }
+
+    /**
+     * 更新流程节点的人员信息和流程节点的名称，其余的暂时不给用户修改
+     * @param wfpInfos
+     */
+    public void updateWfp(List<WfpInfo> wfpInfos){
+        for (int i = 0;i<wfpInfos.size();i++){
+            WfpInfo wfpInfo = wfpInfos.get(i);
+            WFPoint wfPoint = wfPointRepository.findOne(wfpInfo.getId());
+            wfPoint.setName(wfpInfo.getName());
+            Role role = wfPoint.getRole();
+            List<IdName> idNames = wfpInfo.getUsersInfos();
+            List<User> users = userRepository.findAll();
+            List<String> ids = new ArrayList<>();
+            for (IdName idName : idNames){
+                ids.add(idName.getId());
+            }
+            for (User user : users){
+                if (!ids.contains(user.getId())){
+                    user.getRoles().remove(role);
+                    userRepository.save(user);
+                }
+            }
+            for (String id : ids){
+                User user = userRepository.findOne(id);
+                user.getRoles().add(role);
+                userRepository.save(user);
+            }
+            wfPointRepository.save(wfPoint);
+        }
+    }
+
 
     /**
      * 给流程节点增加人员
@@ -91,6 +131,8 @@ public class WFPointService {
             wfPointRepository.save(wfPoint);
         }
     }
+
+
 
     /**
      * 从用户ids获取用户对象

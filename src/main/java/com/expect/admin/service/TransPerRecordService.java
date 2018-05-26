@@ -42,7 +42,6 @@ public class TransPerRecordService {
         transPerRecord.setUser(user);
         transPerRecord.setClsj(DateUtil.format(new Date(),DateUtil.fullFormat));
         transPerRecord.setCljg(cljg);
-        transPerRecord.setWfPoint(wfPoint);
         transPerRecord.setMessage(message);
         transPerRecord.setTransferPersonnel(tp);
         transPerRecord = tprRepository.save(transPerRecord);
