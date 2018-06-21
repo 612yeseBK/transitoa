@@ -8,6 +8,7 @@ public class WfInfo {
     String id;
     String name;
     String typeName;
+    boolean candele;
     String description;
 
     public String getId() {
@@ -40,5 +41,13 @@ public class WfInfo {
 
     public void setTypeName(String typeName) {
         this.typeName = typeName;
+    }
+
+    public boolean isCandele() {
+        return candele;
+    }
+
+    public void setCandele(boolean candele) {
+        this.candele = candele;
     }
 }

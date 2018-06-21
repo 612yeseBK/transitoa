@@ -5,6 +5,7 @@ import com.expect.admin.data.dao.UserRepository;
 import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WorkFlow;
 import com.expect.admin.data.pojo.*;
+import com.expect.admin.exception.NoKindWorkFlowException;
 import com.expect.admin.service.WFPointService;
 import com.expect.admin.service.WorkFlowService;
 import com.expect.admin.utils.JsonResult;
@@ -56,17 +57,27 @@ public class WorkFlowController {
     public Map<String, String> getTypes(HttpServletRequest request, HttpServletResponse response){
         Map map1 = new HashMap();
         for (Map.Entry<String, String> entry : WorkFlow.map.entrySet()) {
-            map1.put(entry.getKey(),entry.getValue());
+            if (!entry.getValue().contains("已停用")){
+                map1.put(entry.getKey(),entry.getValue());
+            }
         }
-        System.out.println(JsonUtil.getInstance().toJson(map1));
+        return map1;
+    }
+
+    @RequestMapping("/getAllTypes")
+    @ResponseBody
+    public Map<String, String> getAllTypes(HttpServletRequest request, HttpServletResponse response){
         return WorkFlow.map;
     }
 
-
     @RequestMapping("/getFucs")
     @ResponseBody
-    public List<IdName> getFucs(HttpServletRequest request, HttpServletResponse response){
-        return workFlowService.getFunctions();
+    public List<IdName> getFucs(String pareName, HttpServletRequest request, HttpServletResponse response){
+        pareName = WorkFlow.map.get(pareName);
+        if (pareName.indexOf("已停用")!=-1) {
+            pareName = pareName.substring(0, pareName.indexOf("已停用") - 1);
+        }
+        return workFlowService.getFunctions(pareName);
     }
 
     /**
@@ -103,22 +114,22 @@ public class WorkFlowController {
 
 
     @RequestMapping("/abortWf")
-    public void abortWf(String id,HttpServletRequest request, HttpServletResponse response){
-        workFlowService.sorftDelete(id);
+    public void abortWf(String id,HttpServletRequest request, HttpServletResponse response) throws IOException{
         try {
-            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "添加成功").build());
-        } catch (IOException e) {
-            e.printStackTrace();
+            workFlowService.sorftDelete(id);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "弃用成功").build());
+        } catch (Exception e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "弃用失败").build());
         }
     }
 
     @RequestMapping("/reuse")
-    public void reuse(String id,HttpServletRequest request, HttpServletResponse response){
-        workFlowService.reuse(id);
+    public void reuse(String id,HttpServletRequest request, HttpServletResponse response) throws IOException{
         try {
-            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "添加成功").build());
-        } catch (IOException e) {
-            e.printStackTrace();
+            workFlowService.reuse(id);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "启用成功").build());
+        } catch (Exception e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "启用成功").build());
         }
     }
 
@@ -127,10 +138,19 @@ public class WorkFlowController {
      */
     @RequestMapping("/getAllWfInfo")
     @ResponseBody
-    public List<WfInfo> getAllWfInfo(HttpServletRequest request, HttpServletResponse response){
+    public List<WfInfo> getAllWfInfo(HttpServletRequest request, HttpServletResponse response) throws NoKindWorkFlowException{
         return workFlowService.getAllWfInfo();
     }
 
+    @RequestMapping("/deleWf")
+    public void deleWf(String id, HttpServletRequest request, HttpServletResponse response) throws IOException{
+        try {
+            workFlowService.UnchekrealDelete(id);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "删除成功").build());
+        } catch (NoKindWorkFlowException e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "删除失败").build());
+        }
+    }
 
     @RequestMapping("/getUserFromUserName")
     @ResponseBody
@@ -152,9 +172,5 @@ public class WorkFlowController {
         return map;
 
     }
-
-
-
-
 }
 

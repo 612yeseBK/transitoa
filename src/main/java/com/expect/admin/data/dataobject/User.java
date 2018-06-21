@@ -73,16 +73,8 @@ public class User implements UserDetails {
 			inverseJoinColumns = @JoinColumn(name = "attachment_id"))
 	private Set<Attachment> attachments;//附件
 
-	public Set<TransferPersonnel> getTransferPersonnels() {
-		return transferPersonnels;
-	}
-
-	public void setTransferPersonnels(Set<TransferPersonnel> transferPersonnels) {
-		this.transferPersonnels = transferPersonnels;
-	}
-
-	@OneToMany(mappedBy="applicant",cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-	private Set<TransferPersonnel> transferPersonnels;//此用户申请的人员借用表的记录
+//	@OneToMany(mappedBy="applicant",cascade = CascadeType.REFRESH)
+//	private Set<TransferPersonnel> transferPersonnels;//此用户申请的人员借用表的记录
 
 	public String getId() {
 		return id;
@@ -200,6 +192,14 @@ public class User implements UserDetails {
 	public void setPhoneNumber2(String phoneNumber2) {
 		this.phoneNumber2 = phoneNumber2;
 	}
+
+//	public Set<TransferPersonnel> getTransferPersonnels() {
+//		return transferPersonnels;
+//	}
+//
+//	public void setTransferPersonnels(Set<TransferPersonnel> transferPersonnels) {
+//		this.transferPersonnels = transferPersonnels;
+//	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

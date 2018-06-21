@@ -1,20 +1,35 @@
 package com.expect.admin.web;
 
-import com.expect.admin.data.dataobject.TransPerRecord;
-import com.expect.admin.data.dataobject.TransferPersonnel;
-import com.expect.admin.data.dataobject.User;
-import com.expect.admin.data.dataobject.WorkFlow;
+import com.expect.admin.config.Settings;
+import com.expect.admin.data.dataobject.*;
+import com.expect.admin.data.pojo.TransPerson.AddForm;
+import com.expect.admin.data.pojo.TransPerson.TransAplyRecds;
+import com.expect.admin.data.pojo.TransPerson.TransPrint;
+import com.expect.admin.data.pojo.TransPerson.TransperDetail;
+import com.expect.admin.data.pojo.WfDetail;
+import com.expect.admin.factory.WordXmlFactory;
+import com.expect.admin.factory.impl.TransPerFactory;
+import com.expect.admin.service.AttachmentService;
 import com.expect.admin.service.TransferPersonnelService;
 import com.expect.admin.service.UserService;
 import com.expect.admin.service.WorkFlowService;
 import com.expect.admin.service.vo.*;
-import com.expect.admin.utils.StringUtil;
+import com.expect.admin.service.vo.component.FileResultVo;
+import com.expect.admin.service.vo.component.ResultVo;
+import com.expect.admin.utils.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +40,8 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/transper")
 public class TransferPersonnelController {
+    Logger logger = LoggerFactory.getLogger(TransferPersonnelController.class);
+    private final String viewName = "admin/transPerson/";
 
     @Autowired
     WorkFlowService wfs;
@@ -32,81 +49,182 @@ public class TransferPersonnelController {
     UserService userService;
     @Autowired
     TransferPersonnelService tpService;
+    @Autowired
+    private AttachmentService attachmentService;
+    @Autowired
+    private Settings settings;
+
+
+    @RequestMapping("/getAllowForms")
+    @ResponseBody
+    public ModelAndView getFormsHtml(){
+        ModelAndView mv = new ModelAndView(viewName+"choose_transper");
+        return mv;
+    }
+
     /**
      * 根据登录用户获取所有的他可以申请的人员借调流程
      */
-    @RequestMapping("/getAllowForms")
+    @RequestMapping("/getFormsInfo")
     @ResponseBody
-    public List<WorkFlowVo> getAllowForms(){
+    public List<WorkFlowVo> getFormsInfo(){
         User logUser = userService.getLogUsr();
         List<WorkFlow> wkfls = wfs.findAplt(WorkFlow.TRANS_PERSON,logUser);
         List<WorkFlowVo> wfvos = wfs.getVoFromWfs(wkfls);
         return wfvos;
     }
 
-    /**
-     * 根据流程id，将申请表发送给他,同时还有该登录用户的相关信息，填到表中合适的地方
-     * @param id
-     */
-    @RequestMapping("/getOneFrom")
-    public void getOneFrom(String id){
-        WorkFlow workFlow = wfs.findOne(id);
-        UserVo userVo = userService.getLoginUser();
+    @RequestMapping("/getOneFormHtml")
+    @ResponseBody
+    public ModelAndView getOneFormHtml(String id, HttpServletRequest request, HttpServletResponse response){
+        System.out.println(id);
+        request.getSession().removeAttribute("chosed_wfid");
+        request.getSession().setAttribute("chosed_wfid",id);
+        ModelAndView mv = new ModelAndView(viewName+"transper_form");
+        return mv;
     }
 
     /**
-     * 添加但是未提交 ,我决定不提供保存功能了，太累了
-     * @param wfid 流程id
-     * @param tpVo 用户填写的信息
+     * 人员借调附件上传
      */
-    @RequestMapping("/addNotCom")
-    public void addNotCom(String wfid,TransferPersonnelVo tpVo){
-       tpService.add(tpVo,wfid,TransferPersonnel.NOTCOM);
+    @RequestMapping(value = "/upTransPerAtta", method = RequestMethod.POST)
+    @ResponseBody
+    public ResultVo upload(MultipartFile files, HttpServletRequest request) {
+        String path = settings.getAttachmentPath();
+        FileResultVo frv = attachmentService.save(files, path);
+        return frv;
     }
+
 
     /**
      * 提交
-     * @param wfid
-     * @param tpVo
      */
     @RequestMapping("/addAndCom")
-    public void addAndCom(String wfid, TransferPersonnelVo tpVo){
-        tpService.add(tpVo, wfid, TransferPersonnel.WAITING);
+    public void addAndCom(AddForm addForm, String bczl, String[] ids,HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String wfid = (String)request.getSession().getAttribute("chosed_wfid");
+        try {
+            tpService.add(addForm, wfid, ids, bczl);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "保存成功").build());
+        } catch (Exception e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "保存失败").build());
+        }
     }
 
     @RequestMapping("/commitSaved")
-    public  void commitSaved(String tpid,TransferPersonnelVo tpVo){
-        tpService.commitSaved(tpVo,tpid);
+    public void commitSaved(String id){
+        tpService.commitSaved(id);
     }
 
-    /**
-     * 获取登录用户未提交的记录
+
+    @RequestMapping("/deleteWtj")
+    public void deleteWtj(String id,HttpServletRequest request, HttpServletResponse response) throws IOException{
+        try {
+            tpService.deleteWtj(id);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "删除成功").build());
+        } catch (Exception e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "删除失败").build());
+        }
+    }
+
+
+//    @RequestMapping("/getApplyRecords")
+//    @ResponseBody
+//    public ModelAndView getApplyRecords(){
+//        ModelAndView mv = new ModelAndView(viewName+"t_apply_records");
+//        return mv;
+//    }
+
+    /** 由于前端大多是直接拷贝，所以state在这里做一下判断
+     * @param state
+     * @param response
+     * @return
+     * @throws IOException
      */
-    @RequestMapping("/getNotCom")
+    @RequestMapping("/getApplyTables")
     @ResponseBody
-    public List<TransferPersonnelVo> getNotCom(){
+    public ModelAndView getApplyTables(@RequestParam(name = "lx", required = false)String state,
+                                       HttpServletResponse response) throws IOException{
+        ModelAndView mv = new ModelAndView(viewName+"t_apply_records");
         User user = userService.getLogUsr();
-        return tpService.getTransPerByState(user,new String[]{TransferPersonnel.NOTCOM});
+        List<TransAplyRecds> transAplyRecds = tpService.getApplyRecs(user,state);
+        mv.addObject("transAplyRecds",transAplyRecds);
+        return mv;
     }
 
-    /**
-     * 获取登录用户所有申请中处于审批流程中的那些
-     */
-    @RequestMapping("/getWaitings")
-    public List<TransferPersonnelVo> getWaitings(){
-        User user = userService.getLogUsr();
-        return tpService.getTransPerByState(user,new String[]{TransferPersonnel.WAITING});
-    }
 
     /**
-     * 获取登录用户所有申请中已经审核完成的那些
-     * 包括审批通过和未通过的（PASSED和REJECTED)
+     *
+     * @param state waiting和passed和rejected
+     * @param response
+     * @return
+     * @throws IOException
      */
-    @RequestMapping("/getFinished")
+    @RequestMapping("/getApplyTablesContent")
+    public void getApplyTablesContent(@RequestParam(name = "lx", required = false)String state,
+                                       HttpServletResponse response) throws IOException{
+        User user = userService.getLogUsr();
+        List<TransAplyRecds> transAplyRecds = tpService.getApplyRecs(user,state);
+        MyResponseBuilder.writeJsonResponse(response,
+                JsonResult.useDefault(true, "获取申请记录成功", transAplyRecds).build());
+    }
+
+
+
+    @RequestMapping("/sqjlxqE")
     @ResponseBody
-    public List<TransferPersonnelVo> getFinished(){
+    public ModelAndView sqjlxqE(@RequestParam(name = "id", required = true)String id) {
+        ModelAndView modelAndView = new ModelAndView(viewName + "transper_form_detail");
+        TransferPersonnel tp = tpService.findById(id);
+        TransperDetail tpDetail = tpService.getDetailFromTp(tp);
+        modelAndView.addObject("tpDetail", tpDetail);
+        return modelAndView;
+    }
+
+
+    @RequestMapping("/sqjlxqNE")
+    public ModelAndView sqjlxqNE(@RequestParam(name = "id", required = true)String id) {
+        ModelAndView modelAndView = new ModelAndView(viewName + "t_apply_recordDetail_ne");
+        TransferPersonnel tp = tpService.findById(id);
+        TransperDetail tpDetail = tpService.getDetailFromTp(tp);
+        modelAndView.addObject("tpDetail", tpDetail);
+        return modelAndView;
+    }
+
+//    /**
+//     * 获取审批记录的页面
+//     * @return
+//     */
+//    @RequestMapping("/getCheckRecords")
+//    @ResponseBody
+//    public ModelAndView getCheckRecords(){
+//        ModelAndView mv = new ModelAndView(viewName+"t_check_records");
+//        return mv;
+//    }
+
+    @GetMapping(value = "/transpersp")
+    public ModelAndView transpersp(@RequestParam(name = "lx", required = false)String lx) {
         User user = userService.getLogUsr();
-        return tpService.getTransPerByState(user,new String[]{TransferPersonnel.PASSED,TransferPersonnel.REJECTED});
+        if(StringUtil.isBlank(lx)) lx = "dsp";
+        ModelAndView modelAndView = new ModelAndView(viewName + "t_approve_records");
+        List<TransferPersonnelVo> transferPersonnelVos = tpService.getCheckForms(user);
+        modelAndView.addObject("transferPersonnelVos",transferPersonnelVos);
+        return modelAndView;
+    }
+
+
+    @GetMapping(value = "/transperspContent")
+    public void transperspContent(@RequestParam(name = "lx", required = false)String lx,HttpServletResponse response) throws IOException{
+        User user = userService.getLogUsr();
+        List<TransferPersonnelVo> transferPersonnelVos;
+        if(StringUtil.isBlank(lx) || lx.equals("dsp")) {
+            lx = "dsp";
+            transferPersonnelVos = tpService.getCheckForms(user);
+        } else {
+            // 找到该节点所有人员审批过的申请
+            transferPersonnelVos = tpService.getCheckedForms(user);
+        }
+        MyResponseBuilder.writeJsonResponse(response,
+                JsonResult.useDefault(true, "获取已审批记录成功", transferPersonnelVos).build());
     }
 
     /**
@@ -124,42 +242,72 @@ public class TransferPersonnelController {
      */
     @RequestMapping("/getOneCheck")
     @ResponseBody
-    public List<TransPerRecordVo> getOneCheck(String id){
+    public ModelAndView getOneCheck(String id){
+        ModelAndView modelAndView = new ModelAndView(viewName + "t_approve_detail");
         TransferPersonnel tp = tpService.findById(id);
-        // todo
-        return tpService.getRecdsByTransId(id);
+        TransperDetail tpDetail = tpService.getDetailFromTp(tp);
+        modelAndView.addObject("tpDetail", tpDetail);
+        return modelAndView;
     }
 
     /**
-     *
-     * @param id 人员调用表的id
-     * @param message 处理意见
-     * @param cljg 处理结果
+     * 流程审批
+     * @param response
+     * @param cljg
+     * @param message
+     * @param clnrid
+     * @throws IOException
      */
-    @RequestMapping("/commitCheck")
-    public void commitCheck(String id,String message,String cljg){
-        tpService.checkApply(id,message,cljg);
+    @RequestMapping(value = "/commitCheck", method = RequestMethod.POST)
+    public void addLcrz(HttpServletResponse response,
+                        @RequestParam(name = "cljg", required = true)String cljg,
+                        @RequestParam(name = "yj", required = false) String message,
+                        @RequestParam(name = "id", required = true)  String clnrid) throws IOException{
+        if(message == null) message  ="";
+        try{
+            tpService.checkApply(clnrid,message,cljg);
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(true, "借调审核成功！").build());
+        }catch(Exception e) {
+            MyResponseBuilder.writeJsonResponse(response, JsonResult.useDefault(false, "借调审核失败！").build());
+        }
     }
 
-    /**
-     * 获取登录用户已经审批的表单
-     */
-    @RequestMapping("/getCheckedForms")
-    @ResponseBody
-    public List<TransferPersonnelVo> getCheckedForms(){
-        User user = userService.getLogUsr();
-        return tpService.getCheckedForms(user.getId());
-    }
 
     /**
-     * 根据id获取用户选中的已审核表格
-     * 返回的内容包括，所有的审批记录，该用户的审批记录
-     * @param tpid 借调表的id
+     * 获取打印界面的信息
+     * @param id
+     * @return
      */
-    @RequestMapping("/getOneChecked")
-    public void getOneChecked(String tpid){
-        User user = userService.getLogUsr();
-        TransPerRecordVo tprVo = tpService.getRcdBytpAndUsr(user.getId(),tpid);
-        List<TransPerRecordVo> tprVos = tpService.getRecdsByTransId(tpid);
+    @RequestMapping("/getPrintHtml")
+    public ModelAndView getPrintHtml(@RequestParam(name = "id", required = true)String id) {
+        ModelAndView modelAndView = new ModelAndView(viewName + "t_apply_print");
+        TransferPersonnel transferPersonnel = tpService.findById(id);
+        TransPrint transPrint = tpService.getTransPrintFromTransP(transferPersonnel);
+        modelAndView.addObject("transPrint", transPrint);
+        return modelAndView;
     }
+
+    @GetMapping("/transPerPrint")
+    public void transPerPrint(HttpServletRequest request, String xgdm, String xgid, String birthday, HttpServletResponse response) {
+        WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(request.getSession().getServletContext());
+        TransPerFactory factory = null;
+        String factoryBeanName = "TransPerFactory";
+        try{
+            factory = (TransPerFactory) context.getBean(factoryBeanName);//获取本次转换的factory，目前只有两个可以选
+        }catch(Exception e) {
+            logger.error("未找到word生成factory："+factoryBeanName, e);
+        }
+
+        byte[] content = null;
+
+        try {
+            String fileName = factory.getFileName(xgid);//设置最后生成的word文件名
+            content = factory.create(xgid,birthday);//利用wordxml的create函数创建word
+            WordXmlUtil.sendToResponse(response, content, fileName);//将转换后的word发送给用户
+        } catch (Exception e) {
+            logger.error("表格生成失败,xgdm " + xgdm +"xgid "+ xgid, e);
+        }
+    }
+
+
 }

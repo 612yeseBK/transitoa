@@ -1,9 +1,12 @@
 package com.expect.admin.service.vo;
 
 import com.expect.admin.data.dataobject.TransPerRecord;
+import com.expect.admin.data.pojo.TransPerson.Front_TransRec;
+import com.expect.admin.service.convertor.UserConvertor;
+import com.expect.admin.utils.DateUtil;
 import org.springframework.beans.BeanUtils;
 
-import java.util.Date;
+import java.util.*;
 
 /**
  * description:
@@ -29,6 +32,31 @@ public class TransPerRecordVo {
         TransPerRecordVo transPerRecordVo = new TransPerRecordVo();
         BeanUtils.copyProperties(transPerRecord,transPerRecordVo);
         return transPerRecordVo;
+    }
+
+
+    public static List<TransPerRecordVo> convert(Set<TransPerRecord> trs){
+        List<TransPerRecordVo> transPerRecordVos = new ArrayList<>();
+        TransPerRecordVo transPerRecordVo = new TransPerRecordVo();
+        for (TransPerRecord transPerRecord : trs){
+            transPerRecordVo.setId(transPerRecord.getId());
+            transPerRecordVo.setCljg(transPerRecord.getCljg());
+            transPerRecordVo.setClsj(DateUtil.parse(transPerRecord.getClsj(),DateUtil.fullFormat));
+            transPerRecordVo.setMessage(transPerRecord.getMessage());
+            transPerRecordVo.setUserVo(UserConvertor.convert(transPerRecord.getUser()));
+            transPerRecordVos.add(transPerRecordVo);
+            transPerRecordVo.setDyjd(transPerRecord.getWfPoint().getName());
+            transPerRecordVo = new TransPerRecordVo();
+        }
+        Collections.sort(transPerRecordVos, new Comparator<TransPerRecordVo>() {
+            @Override
+            public int compare(TransPerRecordVo o1, TransPerRecordVo o2) {
+                String o1Date = DateUtil.format(o1.getClsj(),DateUtil.longFormat);
+                String o2Date = DateUtil.format(o2.getClsj(),DateUtil.longFormat);
+                return o1Date.compareTo(o2Date);
+            }
+        });
+        return transPerRecordVos;
     }
 
     public String getId() {

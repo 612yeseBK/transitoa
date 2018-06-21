@@ -6,6 +6,7 @@ import com.expect.admin.data.dataobject.User;
 import com.expect.admin.data.dataobject.WFPoint;
 import com.expect.admin.data.dataobject.WorkFlow;
 import com.expect.admin.data.pojo.*;
+import com.expect.admin.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,8 +60,12 @@ public class WFPointService {
             //为每个节点新增一个角色，并将该角色与某个功能绑定，这个功能需要实现添加好
             role.setName(workFlow.getName()+"_"+i);// 此处自动新增角色，角色名是流程名_{节点顺序}
             role.getFunctions().clear();
-            // 这里的角色里面是专门为节点新建的，只能有一个功能
-            role.getFunctions().add(functionRepository.findOne(wfpInfo.getFuncId()));
+            // 这里的角色里面是专门为节点新建的
+            if (wfpInfo.getFuncId().length!=0 || wfpInfo.getFuncId()!=null ) {
+                for (String funid :wfpInfo.getFuncId()){
+                    role.getFunctions().add(functionRepository.findOne(funid));
+                }
+            }
             role = roleRepository.save(role);
             List<IdName> list = wfpInfo.getUsersInfos();
             //增加人员
@@ -219,6 +224,7 @@ public class WFPointService {
         net.setPrePoint(pre);
         net = wfPointRepository.save(net);
         wfPoint.setPrePoint(null);
+        wfPoint = wfPointRepository.save(wfPoint);
         WorkFlow workFlow = wfPoint.getWorkFlow();
         WFPoint beginPoint = workFlow.getBeginPoint();
         if (net.getName().equals(WFPoint.ENDPOINT) && net.getPrePoint().getName().equals(WFPoint.ENDPOINT)){
@@ -229,6 +235,32 @@ public class WFPointService {
         } else if (beginPoint.getId().equals(wfPoint.getId())){
             workFlow.setBeginPoint(net);
         }
+        wfPointRepository.save(wfPoint);
         wfPointRepository.delete(wfPoint);
     }
+
+
+    public void deleteAllPoints(WorkFlow workFlow){
+        WFPoint wfPoint = workFlow.getBeginPoint();
+        workFlow.setBeginPoint(null);
+        workFlowRepository.save(workFlow);
+        WFPoint before;
+        WFPoint next;
+        while (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
+            before = wfPoint.getPrePoint();
+            next = wfPoint.getNxtPoint();
+            next.setPrePoint(before);
+            wfPoint.setPrePoint(null);
+            wfPoint.setWorkFlow(null);
+            String id = wfPoint.getId();
+            wfPointRepository.save(wfPoint);
+            wfPoint = wfPointRepository.save(next);
+            wfPointRepository.delete(id);
+        }
+        wfPoint.setPrePoint(null);
+        wfPoint.setWorkFlow(null);
+        wfPoint = wfPointRepository.save(wfPoint);
+        wfPointRepository.delete(wfPoint);
+    }
+
 }

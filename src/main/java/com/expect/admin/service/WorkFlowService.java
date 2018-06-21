@@ -1,12 +1,10 @@
 package com.expect.admin.service;
 
-import com.expect.admin.data.dao.FunctionRepository;
-import com.expect.admin.data.dao.WorkFlowRepository;
-import com.expect.admin.data.dataobject.Function;
-import com.expect.admin.data.dataobject.User;
-import com.expect.admin.data.dataobject.WFPoint;
-import com.expect.admin.data.dataobject.WorkFlow;
+import com.expect.admin.data.dao.*;
+import com.expect.admin.data.dataobject.*;
 import com.expect.admin.data.pojo.*;
+import com.expect.admin.exception.BaseAppException;
+import com.expect.admin.exception.NoKindWorkFlowException;
 import com.expect.admin.service.convertor.FunctionConvertor;
 import com.expect.admin.service.vo.FunctionVo;
 import com.expect.admin.service.vo.WorkFlowVo;
@@ -16,10 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * description:更新需求后的流程，不包括合同，收发文，会议
@@ -32,6 +27,18 @@ public class WorkFlowService {
     WorkFlowRepository workFlowRepository;
     @Autowired
     FunctionRepository functionRepository;
+    @Autowired
+    TransferPersonnelService tpService;
+    @Autowired
+    TransferPersonnelRepository tpRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    RoleRepository roleRepository;
+    @Autowired
+    WFPointRepository wfPointRepository;
+    @Autowired
+    WFPointService wfPointService;
 
     /**
      * 根据流程类别和申请者姓名找到该申请者所有允许的申请，并返回
@@ -53,11 +60,24 @@ public class WorkFlowService {
     /**
      * 获取所有的菜单
      */
-    public List<IdName> getFunctions() {
+    public List<IdName> getFunctions(String pareName) throws BaseAppException{
         List<Function> functions = functionRepository.findAll();
+        Function pareFunc = new Function();
+        boolean flag = false;
+        for (Function function : functions){
+            if (function.getName().equals(pareName)){
+                pareFunc = function;
+                flag = true;
+                break;
+            }
+        }
+        if (flag == false){
+            throw new BaseAppException("没有找到名为: "+pareName+" 的父功能");
+        }
+        Set<Function> childFuncs = pareFunc.getChildFunctions();
         List<IdName> idNames = new ArrayList<>();
         IdName idName = new IdName();
-        for (Function fuc : functions){
+        for (Function fuc : childFuncs){
             idName.setId(fuc.getId());
             idName.setName(fuc.getName());
             idNames.add(idName);
@@ -91,18 +111,18 @@ public class WorkFlowService {
         return wfPoint;
     }
 
+
+//    public WorkFlow addWF(Addwf addwf){
+//        WorkFlow workFlow = new WorkFlow();
+//        workFlow.setName(addwf.getName());
+//        workFlow.setType(addwf.getType());
+//        workFlow.setDescription(addwf.getDescription());
+//        workFlow = save(workFlow);
+//        return workFlow;
+//    }
     /**
      * 建立新的流程
      */
-    public WorkFlow addWF(Addwf addwf){
-        WorkFlow workFlow = new WorkFlow();
-        workFlow.setName(addwf.getName());
-        workFlow.setType(addwf.getType());
-        workFlow.setDescription(addwf.getDescription());
-        workFlow = save(workFlow);
-        return workFlow;
-    }
-
     public WorkFlow addWF(WfDetail wfDetail){
         WorkFlow workFlow = new WorkFlow();
         workFlow.setName(wfDetail.getName());
@@ -131,7 +151,7 @@ public class WorkFlowService {
      * 获取所有的流程简略信息
      * @return
      */
-    public List<WfInfo> getAllWfInfo(){
+    public List<WfInfo> getAllWfInfo() throws NoKindWorkFlowException{
         List<WorkFlow> workFlows = findAll();
         List<WfInfo> wfInfos = new ArrayList<>();
         WfInfo wfInfo = new WfInfo();
@@ -140,6 +160,7 @@ public class WorkFlowService {
             wfInfo.setName(wf.getName());
             wfInfo.setTypeName(WorkFlow.map.get(wf.getType()));
             wfInfo.setDescription(wf.getDescription());
+            wfInfo.setCandele(canDelete(wf));
             wfInfos.add(wfInfo);
             wfInfo = new WfInfo();
         }
@@ -166,7 +187,13 @@ public class WorkFlowService {
             wfpInfo.setId(wfPoint.getId());
             wfpInfo.setName(wfPoint.getName());
             //这个角色是为了这个节点新建的，里面我们只能添加一个funcition，所以只需要取一个就可以了
-            wfpInfo.setFuncId(wfPoint.getRole().getFunctions().iterator().next().getId());
+            Set<Function> functions = wfPoint.getRole().getFunctions();
+            List<String> funcids = new ArrayList<>();
+            for (Function function:functions){
+                funcids.add(function.getId());
+            }
+            String[] funcids2 = new String[funcids.size()];
+            wfpInfo.setFuncId(funcids.toArray(funcids2));
             for (User user : wfPoint.getRole().getUsers()){
                 IdName idName = new IdName();
                 idName.setId(user.getId());
@@ -228,15 +255,78 @@ public class WorkFlowService {
         workFlowRepository.save(workFlow);
     }
 
+
+    public boolean canDelete(WorkFlow workFlow) throws NoKindWorkFlowException{
+        String temp_type = workFlow.getType();
+        String real_type;
+        int i = temp_type.indexOf("delete");
+        real_type = (i==-1) ? temp_type:temp_type.substring(i+7,temp_type.length());
+        if (real_type.equals(WorkFlow.TRANS_PERSON)){
+            List<TransferPersonnel> tps = tpRepository.findAll();
+            for (TransferPersonnel tp: tps){
+                if (tp.getWorkFlow().getId().equals(workFlow.getId())){
+                    return false;
+                }
+            }
+            return true;
+        }
+        // 如果有新的类别需要在这里添加新的判断
+        else{
+            throw new NoKindWorkFlowException("请在WorkFlowService文件里面添加这个工厂方法");
+        }
+    }
+
+
+
     /**
-     * 真正意义上删除
-     * 先删除该流程的过去申请的审批记录
-     * 再删除该流程过去的申请记录
-     * 再删除该流程的节点
-     * 再删除该流程，所以非常麻烦，事实上可以做一下cascade的级联，但是我就不做了，太麻烦了
+     * 真正意义上删除流程
+     * 流程必须要是那种没有人使用过的
+     * 先删除节点的人员和角色，然后删除节点
      * @param id
      */
-    public void realDelete(String id){
-
+    public boolean realDelete (String id) throws NoKindWorkFlowException {
+        WorkFlow workFlow = workFlowRepository.findOne(id);
+        // 如果可以删则删除
+        if (canDelete(workFlow)){
+            return UnchekrealDelete(workFlow);
+        } else{
+            // 不可以删除返回false
+            return false;
+        }
     }
+
+    /**
+     * 这是不加以审查检验的删除方法
+     * @param id
+     * @return
+     * @throws NoKindWorkFlowException
+     */
+    public boolean UnchekrealDelete (String id) throws NoKindWorkFlowException {
+        WorkFlow workFlow = workFlowRepository.findOne(id);
+        return UnchekrealDelete(workFlow);
+    }
+
+    public boolean UnchekrealDelete (WorkFlow workFlow) throws NoKindWorkFlowException {
+        WFPoint wfPoint = workFlow.getBeginPoint();
+        while (!wfPoint.getName().equals(WFPoint.ENDPOINT)){
+            Role role = wfPoint.getRole();
+            Set<User> users = role.getUsers();
+            for (User user : users){
+                user.getRoles().remove(roleRepository.findOne(role.getId()));
+                userRepository.save(user);
+            }
+            wfPoint.setRole(null);
+            wfPointRepository.save(wfPoint);
+            role.setFunctions(null);
+            roleRepository.save(role);
+            roleRepository.delete(role);
+            wfPoint = wfPoint.getNxtPoint();
+        }
+        wfPointService.deleteAllPoints(workFlow);
+        workFlowRepository.delete(workFlow);
+        return true;
+    }
+
+
+
 }

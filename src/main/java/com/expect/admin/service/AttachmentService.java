@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -188,5 +189,22 @@ public class AttachmentService {
 		return attachmentVoList;
 	}
 
+
+	public List<AttachmentVo> getAttachmentVosBydto(Set<Attachment> attachments) {
+		if (CollectionUtils.isEmpty(attachments)) {
+			return null;
+		}
+		List<AttachmentVo> attachmentVos = new ArrayList<>();
+		for (Attachment attachment : attachments) {
+			AttachmentVo attachmentVo = new AttachmentVo();
+			attachmentVo.setId(attachment.getId());
+			System.out.println(attachment.getId());
+			attachmentVo.setName(attachment.getName());
+			attachment.setTime(attachment.getTime());
+			attachment.setPath(attachment.getPath());
+			attachmentVos.add(attachmentVo);
+		}
+		return attachmentVos;
+	}
 
 }

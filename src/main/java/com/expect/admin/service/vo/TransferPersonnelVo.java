@@ -1,9 +1,6 @@
 package com.expect.admin.service.vo;
 
-import com.expect.admin.data.dataobject.Department;
-import com.expect.admin.data.dataobject.Lcrzb;
-import com.expect.admin.data.dataobject.TransferPersonnel;
-import com.expect.admin.data.dataobject.User;
+import com.expect.admin.data.dataobject.*;
 import org.springframework.beans.BeanUtils;
 
 import java.util.Date;
@@ -16,7 +13,7 @@ import java.util.Set;
  */
 public class TransferPersonnelVo {
     private String id;
-    private User applicant;//借调申请人
+    private String userName;//借调申请人
     private String staffNum;//职工号
     private String applyTime;//申请发起时间
     private String beginTime;//开始的时间
@@ -25,18 +22,44 @@ public class TransferPersonnelVo {
     private int number;//借调人数
     private String toDepartment;//派遣前往的单位
     private String job;//派遣的工种
+    private String state;//状态
 
     public TransferPersonnelVo(){}
 
     /**
      * 将do转成vo
-     * @param transferPersonnel
+     * @param tp
      * @return
      */
-    public static TransferPersonnelVo convert(TransferPersonnel transferPersonnel){
-        TransferPersonnelVo transferPersonnelVo = new TransferPersonnelVo();
-        BeanUtils.copyProperties(transferPersonnel,transferPersonnelVo);
-        return transferPersonnelVo;
+    public static TransferPersonnelVo convert(TransferPersonnel tp){
+        TransferPersonnelVo tpVo = new TransferPersonnelVo();
+        tpVo.id = tp.getId();
+        tpVo.staffNum = tp.getStaffNum();
+        tpVo.number = tp.getNumber();
+        tpVo.toDepartment = tp.getToDepartment();
+        tpVo.job = tp.getJob();
+        tpVo.applyTime = tp.getApplyTime();
+        tpVo.beginTime = tp.getBeginTime();
+        tpVo.endTime =  tp.getEndTime();
+        tpVo.reason = tp.getReason();
+        if (!tp.getNxtPoint().getName().equals(WFPoint.ENDPOINT)){
+            tpVo.state = tp.getNxtPoint().getName();
+        } else if (tp.getState().equals(TransferPersonnel.PASSED)){
+            tpVo.state = "已通过";
+        } else {
+            tpVo.state = "未通过";
+        }
+//        if (tp.getState().equals(TransferPersonnel.WAITING)){
+//            tpVo.state = "待审批";
+//        } else if (tp.getState().equals(TransferPersonnel.NOTCOM)){
+//            tpVo.state = "未提交";
+//        } else if (tp.getState().equals(TransferPersonnel.PASSED)){
+//            tpVo.state = "已通过";
+//        } else {
+//            tpVo.state = "未通过";
+//        }
+        tpVo.userName = tp.getApplicant().getUsername();
+        return tpVo;
     }
 
     /**
@@ -56,14 +79,6 @@ public class TransferPersonnelVo {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public User getApplicant() {
-        return applicant;
-    }
-
-    public void setApplicant(User applicant) {
-        this.applicant = applicant;
     }
 
     public String getApplyTime() {
@@ -130,4 +145,19 @@ public class TransferPersonnelVo {
         this.job = job;
     }
 
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 }

@@ -44,6 +44,7 @@ public class TransPerRecordService {
         transPerRecord.setCljg(cljg);
         transPerRecord.setMessage(message);
         transPerRecord.setTransferPersonnel(tp);
+        transPerRecord.setWfPoint(wfPoint);
         transPerRecord = tprRepository.save(transPerRecord);
         return transPerRecord;
     }

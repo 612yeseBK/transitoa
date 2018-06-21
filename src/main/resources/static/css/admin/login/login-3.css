@@ -238,3 +238,16 @@
 	border-width: 0 2px 2px 0;
 	transform: rotate(45deg);
 }
+
+.login .footer{
+	width: 100%;
+	position:fixed;
+	bottom:40px;
+}
+.login .footer .instruction {
+	line-height: 2px;
+	font-family: Microsoft YaHei;
+	text-align: center;
+	size: 20px;
+	color: #9cee97;
+}

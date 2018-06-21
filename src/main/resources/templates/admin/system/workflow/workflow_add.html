@@ -25,13 +25,17 @@
 </head>
 <body>
 <div id="app">
-    <p><span style="margin-left:10px;font-weight:bold;font-size:18px">流程列表</span><el-button v-on:click="open_wf_hock" style="margin-left: 900px">新增流程</el-button></p>
+    <p>
+        <span style="margin-left:10px;font-weight:bold;font-size:18px">流程列表</span>
+        <el-button v-on:click="open_wf_hock" style="margin-left: 900px">新增流程</el-button>
+    </p>
     <el-table
             :data="wfTable"
             style="width: 100%">
         <el-table-column
                 label="流程名称"
-                width="180">
+                width="280"
+                v-bind:show-overflow-tooltip="true">
             <template slot-scope="scope">
                 <i class="el-icon-info"></i>
                 <span style="margin-left: 10px">{{ scope.row.name }}</span>
@@ -45,7 +49,8 @@
         <el-table-column
                 label="流程描述"
                 width="380"
-                prop='description'>
+                prop='description'
+                v-bind:show-overflow-tooltip="true">
         </el-table-column>
         <el-table-column label="操作">
             <template slot-scope="scope">
@@ -62,6 +67,11 @@
                         type="success"
                         v-if="scope.row.typeName.indexOf('已停用')!=-1"
                         v-on:click="reuse_hock(scope.$index)">启用</el-button>
+                <el-button
+                        size="mini"
+                        type="info"
+                        v-if="scope.row.candele"
+                        v-on:click="dele_hock(scope.$index)">删除</el-button>
             </template>
         </el-table-column>
     </el-table>
@@ -98,7 +108,7 @@
                         节点{{index1+1}}名称：
                         <el-input v-model="item1.name" style="width:30%"></el-input>
                         节点功能：
-                        <el-select v-model="item1.funcId" placeholder="请选择" v-bind:disabled="wfDetail.id!=0">
+                        <el-select v-model="item1.funcId" v-bind:multiple="true" placeholder="请选择" v-bind:disabled="wfDetail.id!=0" style="width: 300px">
                             <el-option
                                     v-for="item3 in functions"
                                     v-bind:key="item3.id"
@@ -106,6 +116,14 @@
                                     v-bind:value="item3.id">
                             </el-option>
                         </el-select>
+                        <!--<el-select v-model="item1.funcId2" placeholder="请选择" v-bind:disabled="wfDetail.id!=0" style="width: 150px">-->
+                            <!--<el-option-->
+                                    <!--v-for="item4 in functions"-->
+                                    <!--v-bind:key="item4.id"-->
+                                    <!--v-bind:label="item4.name"-->
+                                    <!--v-bind:value="item4.id">-->
+                            <!--</el-option>-->
+                        <!--</el-select>-->
 
                         <el-button style="margin-left:5px" v-if="wfDetail.id==0" v-on:click="delepoint_hock(index1)" type="danger" v-bind:round="true" >删除节点</el-button>
                         <li>
@@ -119,7 +137,7 @@
                             :closable = "true"
                             type="success"
                             v-on:close="delUser_hock(index1,index2)"
-                    style="margin-left: 5px;margin-top: 10px">
+                            style="margin-left: 5px;margin-top: 10px">
                         {{tag.name}}
                     </el-tag>
                     </div>

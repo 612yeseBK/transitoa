@@ -16,7 +16,7 @@ import java.util.Set;
 @Entity
 @Table(name = "c_transfer_personnel")
 public class TransferPersonnel {
-    //申请的三种状态
+    //申请的四种状态
     public static final String NOTCOM = "notcom";//未提交
     public static final String WAITING= "waiting";//待处理
     public static final String PASSED = "passed";//已通过
@@ -25,7 +25,7 @@ public class TransferPersonnel {
     private User applicant;//借调申请人
     private String staffNum;//职工号
     private String applyTime;//申请发起时间
-    private String beginTime;//开始的时间
+    private String beginTime;//开始的时间  yyymmdd
     private String endTime;//结束的时间（开始到结束之间就是借调时间）
     private String reason;//借调事由
     private int number;//借调人数
@@ -33,8 +33,9 @@ public class TransferPersonnel {
     private String job;//派遣的工种
     private WorkFlow workFlow;//该申请属于对应哪一个流程
     private WFPoint nxtPoint;//接下来要进入的流程节点，当前节点就是记录里面的节点，某个审批人审核之后，节点往后移动一个
-    private String state;//流程的状态，共有三个，，待提交，待处理，通过，不通过
+    private String state;//流程的状态，共有四个，，待提交，待处理，通过，不通过
     private Set<TransPerRecord> transPerRecords = new HashSet<>();//审批流程日志
+    private Set<Attachment> attachments;//附件
 
 
 
@@ -169,4 +170,17 @@ public class TransferPersonnel {
     public void setState(String state) {
         this.state = state;
     }
+
+    @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @JoinTable(name = "s_transper_attachment", joinColumns = @JoinColumn(name = "transper_id"),
+            inverseJoinColumns = @JoinColumn(name = "document_id"))
+    public Set<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(Set<Attachment> attachments) {
+        this.attachments = attachments;
+    }
+
+
 }

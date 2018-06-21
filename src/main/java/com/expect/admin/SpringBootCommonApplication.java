@@ -1,5 +1,7 @@
 package com.expect.admin;
 
+import com.expect.admin.data.dao.WFPointRepository;
+import com.expect.admin.exception.NoKindWorkFlowException;
 import com.expect.admin.service.TransPerRecordService;
 import com.expect.admin.service.WFPointService;
 import com.expect.admin.service.WorkFlowService;
@@ -28,14 +30,22 @@ public class SpringBootCommonApplication{
 		ApplicationContext applicationContext = SpringApplication.run(SpringBootCommonApplication.class, args);
 		SpringContextUtils springContextUtils = new SpringContextUtils();
 		springContextUtils.setApplicationContext(applicationContext);
-		TransPerRecordService tpr = SpringContextUtils.getBean(TransPerRecordService.class);
-		WorkFlowController wfc = SpringContextUtils.getBean(WorkFlowController.class);
+//		TransPerRecordService tpr = SpringContextUtils.getBean(TransPerRecordService.class);
+//		WorkFlowController wfc = SpringContextUtils.getBean(WorkFlowController.class);
 		WFPointService wfs = SpringContextUtils.getBean(WFPointService.class);
 		WorkFlowService workFlowService = SpringContextUtils.getBean(WorkFlowService.class);
-//		workFlowService.delete("2c9302ab635880510163588065920000");
-//		wfs.deleteOne("2c9302ab635880510163588065b70001");
-//		wfs.getBeforeAndNext("2c9302ab635880510163588065c20002");
-//		wfc.testadd();
+		WFPointRepository wfPointRepository = SpringContextUtils.getBean(WFPointRepository.class);
+//		wfPointRepository.delete("2c9302ab639b21af01639b26e58b0006");
+//		wfs.deletePoint("2c9302ab639b2fd001639b34846b0003");
+//		try {
+//			workFlowService.realDelete("2c9302ab639b39ed01639b40ff940021");
+//		} catch (NoKindWorkFlowException e) {
+//			e.printStackTrace();
+//		}
+////		workFlowService.delete("2c9302ab635880510163588065920000");
+////		wfs.deleteOne("2c9302ab635880510163588065b70001");
+////		wfs.getBeforeAndNext("2c9302ab635880510163588065c20002");
+////		wfc.testadd();
 	}
 
 	/**

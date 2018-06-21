@@ -18,4 +18,6 @@ public interface TransPerRecordRepository extends JpaRepository<TransPerRecord, 
 
     @Query("select tpr from TransPerRecord tpr where tpr.user.id = ?1 and tpr.transferPersonnel.id = ?2 order by tpr.clsj desc")
     TransPerRecord findByUserAndTransferPersonnel(String usrid, String tpid);
+
+    List<TransPerRecord> findByUser(User user);
 }

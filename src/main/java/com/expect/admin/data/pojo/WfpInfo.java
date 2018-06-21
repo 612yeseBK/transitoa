@@ -11,7 +11,7 @@ import java.util.Map;
 public class WfpInfo {
     String id;
     String name;
-    String funcId;
+    String[] funcId;
     List<IdName> usersInfos;
 
     public String getId() {
@@ -38,12 +38,14 @@ public class WfpInfo {
         this.usersInfos = usersInfos;
     }
 
-    public String getFuncId() {
+
+    public String[] getFuncId() {
         return funcId;
     }
 
-    public void setFuncId(String funcId) {
+    public void setFuncId(String[] funcId) {
         this.funcId = funcId;
     }
+
 }
 

@@ -25,6 +25,7 @@ public class TransPerRecord {
 
     private TransferPersonnel transferPersonnel;//处理内容的id（所处理的东西的id）
 
+    private WFPoint wfPoint;
 
     public TransPerRecord(){}
 
@@ -87,13 +88,14 @@ public class TransPerRecord {
         this.transferPersonnel = transferPersonnel;
     }
 
-//    @ManyToOne
-//    @JoinColumn(name = "wfp_id")
-//    public WFPoint getWfPoint() {
-//        return wfPoint;
-//    }
-//
-//    public void setWfPoint(WFPoint wfPoint) {
-//        this.wfPoint = wfPoint;
-//    }
+
+    @ManyToOne
+    @JoinColumn(name = "wfp_id")
+    public WFPoint getWfPoint() {
+        return wfPoint;
+    }
+
+    public void setWfPoint(WFPoint wfPoint) {
+        this.wfPoint = wfPoint;
+    }
 }

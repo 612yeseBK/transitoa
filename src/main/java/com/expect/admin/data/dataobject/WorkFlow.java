@@ -14,6 +14,7 @@ import java.util.Map;
 @Entity
 @Table(name = "work_flow")
 public class WorkFlow {
+    // 由于前端做了判断，必须依照这个规则进行命名,删除前缀必须是“delete_”，后缀必须是“（已停用）”,很多地方依据这个做了判断
     public static final String TRANS_PERSON = "transPerson";//人员借调类标记
     public static final String DELETE_TRANS_PERSON = "delete_transPerson";//人员借调类删除后标记
     public static final Map<String,String> map = new HashMap();
